@@ -4,6 +4,14 @@ import io.javalin.http.Handler;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Optional;
+
+import com.revature.util.Page;
+import com.revature.dao.IngredientDAO;
+import com.revature.dao.RecipeDAO;
+import com.revature.model.Recipe;
 import com.revature.service.AuthenticationService;
 import com.revature.service.RecipeService;
 
@@ -30,7 +38,8 @@ public class RecipeController {
      * * @param authService the service used to manage authentication-related operations
      */
     public RecipeController(RecipeService recipeService, AuthenticationService authService) {
-        
+        this.recipeService = recipeService;
+        this.authService = authService;
     }
 
     /**
@@ -39,8 +48,27 @@ public class RecipeController {
      * Responds with a 200 OK status and the list of recipes, or 404 Not Found with a result of "No recipes found".
      */
     public Handler fetchAllRecipes = ctx -> {
-        
-    };
+        int page = getParamAsClassOrElse(ctx, "page", Integer.class, 1);
+        int pageSize = getParamAsClassOrElse(ctx, "pageSize", Integer.class, 10);
+        String sortBy = getParamAsClassOrElse(ctx, "sortBy", String.class, "name");
+        String sortDirection = getParamAsClassOrElse(ctx, "sortDirection", String.class, "asc");
+        String searchTermRecipe = ctx.queryParam("name");
+        String searchTermPaginated = getParamAsClassOrElse(ctx, "term", String.class, "");          
+        List<Recipe> recipes = recipeService.searchRecipes(searchTermRecipe);
+        Page<Recipe> recipesPage = recipeService.searchRecipes(searchTermPaginated, page, pageSize, sortBy, sortDirection);
+        if (recipes == null || recipes.isEmpty()) {
+            ctx.status(404);
+            ctx.result("No recipes found");
+        } else if(recipesPage == null) {
+            ctx.status(200);
+            ctx.json(recipes);
+        } else {
+            ctx.status(200);
+            ctx.json(recipesPage);
+
+        }
+};
+    
 
     /**
      * TODO: Handler for fetching a recipe by its ID.
@@ -50,7 +78,31 @@ public class RecipeController {
      * If unsuccessful, responds with a 404 status code and a result of "Recipe not found".
      */
     public Handler fetchRecipeById = ctx -> {
+        int id = Integer.parseInt(ctx.pathParam("id"));
+        String token = ctx.header("Authorization");
         
+        if (token != null ) {
+            if(token.startsWith("Bearer ") && authService.getChefFromSessionToken(token.substring(7)) == null)
+            {
+                Optional<Recipe> recipe = recipeService.findRecipe(id);
+
+                if (recipe.isPresent()) {
+                    ctx.status(200);
+                    ctx.json(recipe.get());
+                } else {
+                    ctx.status(404);
+                    ctx.result("Recipe not found");
+                }
+            }
+        } 
+        Optional<Recipe> recipe = recipeService.findRecipe(id);
+        if (recipe.isPresent()) {
+            ctx.status(200);
+            ctx.json(recipe.get());
+        } else {
+            ctx.status(404);
+            ctx.result("Recipe not found");
+        }
     };
 
     /**
@@ -60,7 +112,23 @@ public class RecipeController {
      * If unauthorized, responds with a 401 Unauthorized status.
      */
     public Handler createRecipe = ctx -> {
-       
+        String token = ctx.header("Authorization");
+        if (token == null || !token.startsWith("Bearer ")) {
+            ctx.status(401);
+            ctx.result("Unauthorized - Invalid token format");
+            return;
+        }
+        token = token.substring(7);
+        if (authService.getChefFromSessionToken(token) == null) {
+            ctx.status(401);
+            ctx.result("Unauthorized");
+            return;
+        }
+        Recipe recipe = ctx.bodyAsClass(Recipe.class);
+        System.out.println(recipe +"in create handler");
+        recipeService.saveRecipe(recipe);
+        ctx.status(201);
+        ctx.json(recipe);
     };
 
     /**
@@ -72,7 +140,16 @@ public class RecipeController {
      */
     public Handler deleteRecipe = ctx -> {
         int id = Integer.parseInt(ctx.pathParam("id"));
-        recipeService.deleteRecipe(id);
+        Optional<Recipe> recipe = recipeService.findRecipe(id);
+        if (recipe.isPresent()) {
+            System.out.println("in delete handler"+ recipe.get());
+            recipeService.deleteRecipe(id);
+            ctx.status(200);
+            ctx.result("Recipe deleted successfully");
+        } else {
+            ctx.status(404);
+            ctx.result("Recipe not found");
+        }
     };
 
     /**
@@ -83,7 +160,24 @@ public class RecipeController {
      * If unsuccessfuly, responds with a 404 status code and a result of "Recipe not found."
      */
     public Handler updateRecipe = ctx -> {
-
+        String token = ctx.header("Authorization");
+        if (token == null || authService.getChefFromSessionToken(token) == null) {
+            ctx.status(401);
+            ctx.result("Unauthorized");
+            return;
+        }
+        int id = Integer.parseInt(ctx.pathParam("id"));
+        Recipe updatedRecipe = ctx.bodyAsClass(Recipe.class);
+        Optional<Recipe> existingRecipe = recipeService.findRecipe(id);
+        if (existingRecipe.isPresent()) {
+            updatedRecipe.setId(id);
+            recipeService.saveRecipe(updatedRecipe);
+            ctx.status(200);
+            ctx.json(updatedRecipe);
+        } else {
+            ctx.status(404);
+            ctx.result("Recipe not found");
+        }
     };
 
     /**

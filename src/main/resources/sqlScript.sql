@@ -9,7 +9,11 @@
 --      5. isAdmin: A boolean field to indicate if the chef has admin privileges.
 
 CREATE TABLE CHEF (
-	
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	username VARCHAR(255) NOT NULL UNIQUE,
+	email VARCHAR(255) NOT NULL UNIQUE,
+	password VARCHAR(255) NOT NULL UNIQUE,
+	is_Admin BOOLEAN DEFAULT FALSE
 );
 
 
@@ -22,8 +26,13 @@ CREATE TABLE CHEF (
 --      3. instructions: A non-nullable varchar field to store the recipe's instructions.
 --      4. chef_id: A foreign key that references the 'id' field from the Chef table. Ensure that referential integrity is maintained by cascading deletions.
 CREATE TABLE RECIPE (
-	
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    instructions VARCHAR(255) NOT NULL,
+    chef_id INT,
+    FOREIGN KEY (chef_id) REFERENCES CHEF(id) ON DELETE CASCADE
 );
+
 
 -- Create Ingredient Table:
 --  This table stores information about ingredients.
@@ -31,7 +40,8 @@ CREATE TABLE RECIPE (
 --      1. id: An auto-incremented primary key to uniquely identify each ingredient.
 --      2. name: A unique and non-nullable varchar field (max 20 characters) to store the ingredient's name.
 CREATE TABLE INGREDIENT (
-	
+	  id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(20) NOT NULL UNIQUE
 );
 
 -- Recipe_Ingredient Table
@@ -45,8 +55,16 @@ CREATE TABLE INGREDIENT (
 -- 5. unit: A non-nullable varchar field (max 20 characters) to store the unit of the volume.
 -- 6. is_metric: A boolean field to indicate if the unit is in metric. Defaults to false.
 CREATE TABLE RECIPE_INGREDIENT (
-
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    recipe_id INT NOT NULL,
+    ingredient_id INT NOT NULL,
+    vol DECIMAL(10, 2) NOT NULL,
+    unit VARCHAR(20) NOT NULL,
+    is_metric BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (recipe_id) REFERENCES RECIPE(id) ON DELETE CASCADE,
+    FOREIGN KEY (ingredient_id) REFERENCES INGREDIENT(id) ON DELETE CASCADE
 );
+
 
 -- DO NOT EDIT ANY CODE BELOW THIS LINE!
 -- The below code inserts values into the tables you define.

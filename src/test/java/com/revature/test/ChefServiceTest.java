@@ -10,6 +10,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -44,7 +45,7 @@ class ChefServiceTest {
     }
 
     @Test
-    void fetchOneChef() {
+    void fetchOneChef() throws SQLException {
         when(chefDao.getChefById(1)).thenReturn(MOCKS.get(0));
         Optional<Chef> chef = chefService.findChef(1);
         assertTrue(chef.isPresent(), () -> "Chef should be present");
@@ -52,14 +53,14 @@ class ChefServiceTest {
     }
 
     @Test
-    void failToFetchOneChef() {
+    void failToFetchOneChef() throws SQLException {
         when(chefDao.getChefById(1)).thenReturn(null);
         Optional<Chef> chef = chefService.findChef(1);
         assertTrue(chef.isEmpty(), () -> "Chef should not be present");
     }
 
     @Test
-    void saveNewChef() {
+    void saveNewChef() throws SQLException {
         Chef newChef = new Chef(0, "new chef", "newchef@chefscape.net", "1234abc", false);
         ArgumentCaptor<Chef> chefCaptor = ArgumentCaptor.forClass(Chef.class);
         when(chefDao.createChef(any(Chef.class))).thenReturn(42);
@@ -70,7 +71,7 @@ class ChefServiceTest {
     }
 
     @Test
-    void updateChef() {
+    void updateChef() throws SQLException {
         Chef existingChef = new Chef(42, "Existing Chef", "Existing.Chef@gmail.com", "1234abc", false);
         ArgumentCaptor<Chef> chefCaptor = ArgumentCaptor.forClass(Chef.class);
         chefService.saveChef(existingChef);
@@ -80,7 +81,7 @@ class ChefServiceTest {
     }
 
     @Test
-    void deleteChef() {
+    void deleteChef() throws SQLException {
         when(chefDao.getChefById(1)).thenReturn(MOCKS.get(0));
         doNothing().when(chefDao).deleteChef(any(Chef.class));
         ArgumentCaptor<Chef> chefCaptor = ArgumentCaptor.forClass(Chef.class);
@@ -90,28 +91,28 @@ class ChefServiceTest {
     }
 
     @Test
-    void searchForListOfAllChefs() {
+    void searchForListOfAllChefs() throws SQLException {
         when(chefDao.getAllChefs()).thenReturn(MOCKS);
         List<Chef> chefs = chefService.searchChefs(null);
         assertIterableEquals(MOCKS, chefs, () -> "Chefs should match");
     }
 
     @Test
-    void searchForFilteredListOfChefs() {
+    void searchForFilteredListOfChefs() throws SQLException {
         when(chefDao.searchChefsByTerm("a")).thenReturn(Arrays.asList(MOCKS.get(1), MOCKS.get(2)));
         List<Chef> chefs = chefService.searchChefs("a");
         assertIterableEquals(Arrays.asList(MOCKS.get(1), MOCKS.get(2)), chefs, () -> "Chefs should match");
     }
 
     @Test
-    void searchReturnsEmptyList() {
+    void searchReturnsEmptyList() throws SQLException {
         when(chefDao.searchChefsByTerm("Bal")).thenReturn(Collections.emptyList());
         List<Chef> chefs = chefService.searchChefs("Bal");
         assertTrue(chefs.isEmpty(), () -> "Chefs should be empty");
     }
 
     @Test
-    void searchForPageOfAllChefs() {
+    void searchForPageOfAllChefs() throws SQLException {
         when(chefDao.getAllChefs(any(PageOptions.class))).thenReturn(new Page<Chef>(1, 4, 1, 4, MOCKS));
         Page<Chef> chefs = chefService.searchChefs(null, 1, 4, "id", "asc");
         ArgumentCaptor<PageOptions> optionsCaptor = ArgumentCaptor.forClass(PageOptions.class);
@@ -120,7 +121,7 @@ class ChefServiceTest {
     }
 
     @Test
-    void searchForFilteredPageOfChef() {
+    void searchForFilteredPageOfChef() throws SQLException {
         when(chefDao.searchChefsByTerm(anyString(), any(PageOptions.class))).thenReturn(new Page<Chef>(1, 2, 1, 2, Arrays.asList(MOCKS.get(1), MOCKS.get(2))));
         Page<Chef> chefs = chefService.searchChefs("a", 1, 2, "id", "asc");
         ArgumentCaptor<PageOptions> optionsCaptor = ArgumentCaptor.forClass(PageOptions.class);
@@ -130,7 +131,7 @@ class ChefServiceTest {
     }
 
     @Test
-    void searchReturnsEmptyPage() {
+    void searchReturnsEmptyPage() throws SQLException {
         when(chefDao.searchChefsByTerm(anyString(), any(PageOptions.class))).thenReturn(new Page<Chef>(1, 5, 0, 0, Collections.emptyList()));
         Page<Chef> chefs = chefService.searchChefs("Bal", 1, 5, "id", "asc");
         ArgumentCaptor<PageOptions> optionsCaptor = ArgumentCaptor.forClass(PageOptions.class);

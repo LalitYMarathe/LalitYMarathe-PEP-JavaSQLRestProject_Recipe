@@ -39,7 +39,7 @@ public class DBUtil {
 		try(Connection conn = new ConnectionUtil().getConnection()) {
 			conn.prepareStatement("DROP ALL OBJECTS").executeUpdate();
 			conn.prepareStatement(sqlScript.toString()).executeUpdate();
-		} catch (SQLException e) {
+			} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}

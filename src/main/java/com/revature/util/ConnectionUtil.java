@@ -30,7 +30,7 @@ public class ConnectionUtil {
 	/**
 	 * @return an active connection to the database
 	 */
-	public Connection getConnection() {
+	public Connection getConnection(){
 		try {
 			return pool.getConnection();
 		} catch (SQLException e) {

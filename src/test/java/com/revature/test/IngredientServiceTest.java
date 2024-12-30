@@ -47,7 +47,7 @@ public class IngredientServiceTest {
     }
 
     @Test
-    void fetchOneIngredient() {
+    void fetchOneIngredient() throws SQLException{
         when(ingredientDao.getIngredientById(1)).thenReturn(MOCKS.get(0));
         Optional<Ingredient> ingredient = ingredientService.findIngredient(1);
         assertTrue(ingredient.isPresent(), () -> "Ingredient should be present");
@@ -55,14 +55,14 @@ public class IngredientServiceTest {
     }
 
     @Test
-    void failToFetchOneIngredient() {
+    void failToFetchOneIngredient() throws SQLException{
         when(ingredientDao.getIngredientById(1)).thenReturn(null);
         Optional<Ingredient> recipe = ingredientService.findIngredient(1);
         assertTrue(recipe.isEmpty(), () -> "Ingredient should not be present");
     }
 
     @Test
-    void saveNewIngredient() {
+    void saveNewIngredient() throws SQLException{
         Ingredient newIngredient = new Ingredient("new ingredient");
         ArgumentCaptor<Ingredient> ingredientCaptor = ArgumentCaptor.forClass(Ingredient.class);
         when(ingredientDao.createIngredient(any(Ingredient.class))).thenReturn(42);
@@ -73,7 +73,7 @@ public class IngredientServiceTest {
     }
 
     @Test
-    void updateIngredient() {
+    void updateIngredient() throws SQLException{
         Ingredient existingIngredient = new Ingredient(42, "new ingredient");
         ArgumentCaptor<Ingredient> ingredientCaptor = ArgumentCaptor.forClass(Ingredient.class);
         doNothing().when(ingredientDao).updateIngredient(any(Ingredient.class));
@@ -94,28 +94,28 @@ public class IngredientServiceTest {
     }
 
     @Test
-    void searchForListOfAllIngredient() {
+    void searchForListOfAllIngredient() throws SQLException{
         when(ingredientDao.getAllIngredients()).thenReturn(MOCKS);
         List<Ingredient> ingredients = ingredientService.searchIngredients(null);
         assertIterableEquals(MOCKS, ingredients, () -> "Ingredients should match");
     }
 
     @Test
-    void searchForFilteredListOfIngredients() {
+    void searchForFilteredListOfIngredients() throws SQLException{
         when(ingredientDao.searchIngredients("to")).thenReturn(Arrays.asList(MOCKS.get(1), MOCKS.get(2), MOCKS.get(5)));
         List<Ingredient> ingredients = ingredientService.searchIngredients("to");
         assertIterableEquals(Arrays.asList(MOCKS.get(1), MOCKS.get(2), MOCKS.get(5)), ingredients, () -> "Ingredients should match");
     }
 
     @Test
-    void searchReturnsEmptyList() {
+    void searchReturnsEmptyList() throws SQLException{
         when(ingredientDao.searchIngredients("Bal")).thenReturn(Collections.emptyList());
         List<Ingredient> ingredients = ingredientService.searchIngredients("Bal");
         assertTrue(ingredients.isEmpty(), () -> "Ingredients should be empty");
     }
 
     @Test
-    void searchForPageOfAllRecipes() {
+    void searchForPageOfAllRecipes() throws SQLException{
         when(ingredientDao.getAllIngredients(any(PageOptions.class))).thenReturn(new Page<Ingredient>(1, 5, 1, 5, MOCKS));
         Page<Ingredient> ingredients = ingredientService.searchIngredients(null, 1, 5, "id", "asc");
         ArgumentCaptor<PageOptions> optionsCaptor = ArgumentCaptor.forClass(PageOptions.class);
@@ -124,7 +124,7 @@ public class IngredientServiceTest {
     }
 
     @Test
-    void serchForFilteredPageOfRecipes() {
+    void serchForFilteredPageOfRecipes() throws SQLException{
         when(ingredientDao.searchIngredients(anyString(), any(PageOptions.class))).thenReturn(new Page<Ingredient>(1, 3, 1, 3, Arrays.asList(MOCKS.get(1), MOCKS.get(2), MOCKS.get(5))));
         Page<Ingredient> ingredients = ingredientService.searchIngredients("to", 1, 5, "id", "asc");
         ArgumentCaptor<PageOptions> optionsCaptor = ArgumentCaptor.forClass(PageOptions.class);
@@ -134,7 +134,7 @@ public class IngredientServiceTest {
     }
 
     @Test
-    void searchReturnsEmptyPage() {
+    void searchReturnsEmptyPage() throws SQLException{
         when(ingredientDao.searchIngredients(anyString(), any(PageOptions.class))).thenReturn(new Page<Ingredient>(0, 0, 0, 0, Collections.emptyList()));
         Page<Ingredient> ingredients = ingredientService.searchIngredients("Bal", 1, 5, "id", "asc");
         ArgumentCaptor<PageOptions> optionsCaptor = ArgumentCaptor.forClass(PageOptions.class);

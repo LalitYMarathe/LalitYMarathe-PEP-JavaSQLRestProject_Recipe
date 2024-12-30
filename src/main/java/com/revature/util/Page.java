@@ -119,4 +119,9 @@ public class Page<E> {
                totalElements == page.totalElements &&
                Objects.equals(items, page.items);
     }
+
+    public static Object empty() {
+      // TODO Auto-generated method stub
+      throw new UnsupportedOperationException("Unimplemented method 'empty'");
+    }
 }

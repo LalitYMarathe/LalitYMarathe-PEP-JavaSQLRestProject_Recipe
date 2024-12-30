@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -42,7 +43,7 @@ public class RecipeServiceTest {
     }
 
     @Test
-    void fetchOneRecipe() {
+    void fetchOneRecipe() throws SQLException{
         when(recipeDao.getRecipeById(1)).thenReturn(MOCKS.get(0));
         Optional<Recipe> recipe = recipeService.findRecipe(1);
         assertTrue(recipe.isPresent(), () -> "Recipe should be present");
@@ -50,14 +51,14 @@ public class RecipeServiceTest {
     }
 
     @Test
-    void failToFetchOneRecipe() {
+    void failToFetchOneRecipe() throws SQLException{
         when(recipeDao.getRecipeById(1)).thenReturn(null);
         Optional<Recipe> recipe = recipeService.findRecipe(1);
         assertTrue(recipe.isEmpty(), () -> "Recipe should not be present");
     }
 
     @Test
-    void saveNewRecipe() {
+    void saveNewRecipe() throws SQLException{
         Recipe newRecipe = new Recipe("New Recipe", "New Recipe Instructions");
         ArgumentCaptor<Recipe> recipeCaptor = ArgumentCaptor.forClass(Recipe.class);
         when(recipeDao.createRecipe(any(Recipe.class))).thenReturn(42);
@@ -68,7 +69,7 @@ public class RecipeServiceTest {
     }
 
     @Test
-    void updateRecipe() {
+    void updateRecipe() throws SQLException{
         Recipe existingRecipe = new Recipe(42, "Existing Recipe", "Existing Recipe Instructions", null);
         ArgumentCaptor<Recipe> recipeCaptor = ArgumentCaptor.forClass(Recipe.class);
         doNothing().when(recipeDao).updateRecipe(any(Recipe.class));
@@ -80,7 +81,7 @@ public class RecipeServiceTest {
     }
 
     @Test
-    void deleteRecipe() {
+    void deleteRecipe() throws SQLException{
         when(recipeDao.getRecipeById(1)).thenReturn(MOCKS.get(0));
         doNothing().when(recipeDao).deleteRecipe(any(Recipe.class));
         ArgumentCaptor<Recipe> recipeCaptor = ArgumentCaptor.forClass(Recipe.class);
@@ -90,28 +91,28 @@ public class RecipeServiceTest {
     }
 
     @Test
-    void searchForListOfAllRecipes() {
+    void searchForListOfAllRecipes() throws SQLException{
         when(recipeDao.getAllRecipes()).thenReturn(MOCKS);
         List<Recipe> recipes = recipeService.searchRecipes(null);
         assertIterableEquals(MOCKS, recipes, () -> "Recipes should match");
     }
 
     @Test
-    void searchForFilteredListOfRecipes() {
+    void searchForFilteredListOfRecipes() throws SQLException{
         when(recipeDao.searchRecipesByTerm("a")).thenReturn(Arrays.asList(MOCKS.get(0), MOCKS.get(2), MOCKS.get(3), MOCKS.get(4)));
         List<Recipe> recipes = recipeService.searchRecipes("a");
         assertIterableEquals(Arrays.asList(MOCKS.get(0), MOCKS.get(2), MOCKS.get(3), MOCKS.get(4)), recipes, () -> "Recipes should match");
     }
 
     @Test
-    void searchReturnsEmptyList() {
+    void searchReturnsEmptyList() throws SQLException{
         when(recipeDao.searchRecipesByTerm("Bal")).thenReturn(Collections.emptyList());
         List<Recipe> recipes = recipeService.searchRecipes("Bal");
         assertTrue(recipes.isEmpty(), () -> "Recipes should be empty");
     }
 
     @Test
-    void searchForPageOfAllRecipes() {
+    void searchForPageOfAllRecipes() throws SQLException{
         when(recipeDao.getAllRecipes(any(PageOptions.class))).thenReturn(new Page<Recipe>(1, 5, 1, 5, MOCKS));
         Page<Recipe> recipes = recipeService.searchRecipes(null, 1, 5, "id", "asc");
         ArgumentCaptor<PageOptions> optionsCaptor = ArgumentCaptor.forClass(PageOptions.class);
@@ -120,7 +121,7 @@ public class RecipeServiceTest {
     }
 
     @Test
-    void serchForFilteredPageOfRecipes() {
+    void serchForFilteredPageOfRecipes() throws SQLException{
         when(recipeDao.searchRecipesByTerm(anyString(), any(PageOptions.class))).thenReturn(new Page<Recipe>(1, 5, 1, 5, Arrays.asList(MOCKS.get(0), MOCKS.get(2), MOCKS.get(3), MOCKS.get(4))));
         Page<Recipe> recipes = recipeService.searchRecipes("a", 1, 5, "id", "asc");
         ArgumentCaptor<PageOptions> optionsCaptor = ArgumentCaptor.forClass(PageOptions.class);
@@ -130,7 +131,7 @@ public class RecipeServiceTest {
     }
 
     @Test
-    void searchReturnsEmptyPage() {
+    void searchReturnsEmptyPage() throws SQLException{
         when(recipeDao.searchRecipesByTerm(anyString(), any(PageOptions.class))).thenReturn(new Page<Recipe>(1, 5, 0, 0, Collections.emptyList()));
         Page<Recipe> recipes = recipeService.searchRecipes("Bal", 1, 5, "id", "asc");
         ArgumentCaptor<PageOptions> optionsCaptor = ArgumentCaptor.forClass(PageOptions.class);

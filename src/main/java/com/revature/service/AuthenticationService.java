@@ -1,6 +1,11 @@
 package com.revature.service;
+import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
 import com.revature.model.Chef;
 
 
@@ -39,9 +44,20 @@ public class AuthenticationService {
      * 
      * @param chef the Chef object containing login credentials
      * @return a session token if the login is successful; null otherwise
+     * @throws SQLException 
      */
-    public String login(Chef chef) {
-        return null; 
+    public String login(Chef chef) throws SQLException {
+        List<Chef> chefs = chefService.searchChefs(chef.getUsername());
+        System.out.println("++++" + chefs);
+        Optional<Chef> existingChef = chefs.stream()
+            .filter(loginChef -> loginChef.getUsername().equals(chef.getUsername()) && loginChef.getPassword().equals(chef.getPassword()))
+            .findFirst();
+        if (existingChef.isPresent()) {
+            String token = UUID.randomUUID().toString();
+            loggedInUsers.put(token, existingChef.get());
+            return token;
+        }
+        return null;
     }
 
     /**
@@ -51,7 +67,7 @@ public class AuthenticationService {
      */
 
     public void logout(String token) {
-        
+        loggedInUsers.remove(token);
     }
 
     /**
@@ -59,9 +75,11 @@ public class AuthenticationService {
 	 *
 	 * @param chef the chef object containing registration details
 	 * @return the registered chef object
+     * @throws SQLException 
 	 */
-    public Chef registerChef(Chef chef) {
-        return null;
+    public Chef registerChef(Chef chef) throws SQLException {
+        chefService.saveChef(chef);
+        return chef;
     }
 
     /**
@@ -71,6 +89,9 @@ public class AuthenticationService {
      * @return the Chef object associated with the session token; null if not found
      */
     public Chef getChefFromSessionToken(String token) {
-        return null;
+        if (token == null || !loggedInUsers.containsKey(token)) {
+            return null;
+        }
+        return loggedInUsers.get(token);
     }
 }

@@ -32,6 +32,11 @@ public class Chef {
         this.password = password;
     }
 
+    public Chef(int id, String username) {
+        this.id = id;
+        this.username = username;
+    }
+
     public Chef(int id, String username, String email, String password, boolean isAdmin) {
         this.id = id;
         this.username = username;

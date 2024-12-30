@@ -1,11 +1,13 @@
 package com.revature.service;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
 import com.revature.model.Chef;
 import com.revature.dao.ChefDAO;
 import com.revature.util.Page;
+import com.revature.util.PageOptions;
 
 /**
  * The ChefService class provides services related to Chef objects,
@@ -28,7 +30,7 @@ public class ChefService {
      * @param chefDao the ChefDao to be used by this service for data access
      */
     public ChefService(ChefDAO chefDAO) {
-        
+        this.chefDAO = chefDAO;
     }
 
     /**
@@ -38,8 +40,14 @@ public class ChefService {
      * @return an Optional containing the found Chef if present; 
      *         an empty Optional if not found
      */
-    public Optional<Chef> findChef(int id) {
-        return null; 
+    public Optional<Chef> findChef(int id)throws SQLException {
+        try {
+            Chef chef = chefDAO.getChefById(id);
+            return Optional.ofNullable(chef);
+        } catch (Exception e) {
+            throw new SQLException("chef not found");
+        }
+        
     }
 
     /**
@@ -49,8 +57,13 @@ public class ChefService {
      *
      * @param chef the Chef entity to be saved or updated
      */
-    public void saveChef(Chef chef) {
-        
+    public void saveChef(Chef chef) throws SQLException{
+        if (chef.getId() == 0) {
+            int id = chefDAO.createChef(chef);
+            chef.setId(id);
+        } else {
+            chefDAO.updateChef(chef);
+        }
     }
 
     
@@ -61,8 +74,11 @@ public class ChefService {
      * @param term the search term for filtering Chefs by attributes
      * @return a list of Chefs matching the search criteria, or all Chefs if term is null
      */
-    public List<Chef> searchChefs(String term) {
-        return null;
+    public List<Chef> searchChefs(String term)throws SQLException {
+        if (term == null || term.isBlank()) {
+            return chefDAO.getAllChefs();
+        }
+        return chefDAO.searchChefsByTerm(term);
     }
 
     /**
@@ -70,8 +86,11 @@ public class ChefService {
      *
      * @param id the unique identifier of the Chef to be deleted
      */
-    public void deleteChef(int id) {
-        
+    public void deleteChef(int id) throws SQLException{
+        Chef chef = chefDAO.getChefById(id);
+        if (chef != null) {
+            chefDAO.deleteChef(chef);
+        }
     }
 
     /**
@@ -85,8 +104,18 @@ public class ChefService {
      * @return a Page containing the results of the search
      */
 	
-    public Page<Chef> searchChefs(String term, int page, int pageSize, String sortBy, String sortDirection) {
-        return null;
+    public Page<Chef> searchChefs(String term, int page, int pageSize, String sortBy, String sortDirection)throws SQLException {
+        PageOptions pageOptions = new PageOptions(page, pageSize, sortBy, sortDirection);
+        if (term == null || term.isEmpty()) {
+            return chefDAO.getAllChefs(pageOptions);
+        } else {
+            return chefDAO.searchChefsByTerm(term, pageOptions);
+        }
+    }
+
+    public Chef getChefByCredentials(Chef chef) throws SQLException {
+        Chef chef2 = chefDAO.getChefByCredential(chef);
+        return chef2;
     }
 }
 
